@@ -2,7 +2,7 @@ import os, hmac, hashlib, time, sqlite3, logging
 from contextlib import contextmanager
 from functools import wraps
 import requests
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify, g, send_from_directory
 from flask_cors import CORS
 from itsdangerous import URLSafeTimedSerializer, BadSignature
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -28,6 +28,11 @@ DEV_MODE = os.environ.get("DEV_MODE") == "1"  # LOCAL TESTING ONLY, never enable
 app = Flask(__name__)
 CORS(app, origins=os.environ.get("FRONTEND_ORIGIN", "*").split(","))
 ser = URLSafeTimedSerializer(SECRET)
+
+# ---------- serve frontend ----------
+@app.get("/")
+def index():
+    return send_from_directory(".", "index.html")
 
 # game id -> info; packs = (name, cost USD, supplier product code)
 CATALOG = {
