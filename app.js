@@ -1,5 +1,5 @@
 /* ====== កែ ២ បន្ទាត់នេះ ====== */
-var API = 'http://127.0.0.1:5000/api';  // test ក្នុង Laragon · ពេលដាក់ពិតដូរទៅ URL backend
+var API = 'https://webseit-top-up.onrender.com/api';   // ដូរទៅ URL ពិតប្រាកដនៅលើ Render របស់អ្នក';  // test ក្នុង Laragon · ពេលដាក់ពិតដូរទៅ URL backend
 var BOT='YourBotUsername';                           // ឈ្មោះ Telegram bot (គ្មាន @)
 /* ============================== */
 var T=null,U=null,G=[],sel=null,msg='',slide=0,poll=null;
