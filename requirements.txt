@@ -1,0 +1,6 @@
+flask
+flask-cors
+itsdangerous
+apscheduler
+requests
+gunicorn
