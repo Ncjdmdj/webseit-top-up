@@ -71,6 +71,7 @@ def init_db():
           pack_idx INTEGER, pack_name TEXT, code TEXT, player_id TEXT, price INTEGER, cost INTEGER,
           status TEXT, note TEXT, created INTEGER);
         CREATE TABLE IF NOT EXISTS pricing(k TEXT PRIMARY KEY, v REAL);
+        CREATE TABLE IF NOT EXISTS admin_log(id INTEGER PRIMARY KEY AUTOINCREMENT, admin_id INTEGER, action TEXT, detail TEXT, created INTEGER);
         """)
         try:
             c.execute("ALTER TABLE orders ADD COLUMN supplier_code TEXT")
@@ -341,6 +342,82 @@ def set_pricing():
     except (TypeError, ValueError):
         return err("invalid number")
     return jsonify(ok=True)
+
+def alog(c, action, detail):
+    c.execute("INSERT INTO admin_log(admin_id,action,detail,created) VALUES(?,?,?,?)", (g.uid, action, str(detail)[:300], int(time.time())))
+
+
+@app.get("/api/admin/orders")
+@admin_required
+def admin_orders():
+    st = request.args.get("status", "review")
+    with db() as c:
+        q = ("SELECT o.id,o.user_id,u.name uname,o.game_name,o.pack_name,o.player_id,o.price,o.cost,o.status,o.note,o.supplier_code,o.created "
+             "FROM orders o LEFT JOIN users u ON u.id=o.user_id ")
+        rows = c.execute(q + ("ORDER BY o.id DESC LIMIT 100" if st == "all" else "WHERE o.status=? ORDER BY o.id DESC LIMIT 100"),
+                         () if st == "all" else (st,)).fetchall()
+    return jsonify(orders=[dict(r, price=r["price"] / 100, cost=r["cost"] / 100) for r in rows])
+
+
+@app.post("/api/admin/orders/<int:oid>/resolve")
+@admin_required
+def admin_resolve(oid):
+    action = (request.get_json(silent=True) or {}).get("action")
+    with db() as c:
+        o = c.execute("SELECT * FROM orders WHERE id=?", (oid,)).fetchone()
+        if not o:
+            return err("not found", 404)
+        if o["status"] not in ("review", "processing"):
+            return err("order is " + o["status"])
+        if action == "success":
+            c.execute("UPDATE orders SET status='success',note='manual' WHERE id=? AND status IN ('review','processing')", (oid,))
+        elif action == "refund":
+            if c.execute("UPDATE orders SET status='failed',note='manual refund' WHERE id=? AND status IN ('review','processing')", (oid,)).rowcount == 1:
+                c.execute("UPDATE users SET wallet=wallet+? WHERE id=?", (o["price"], o["user_id"]))
+        elif action == "retry":
+            c.execute("UPDATE orders SET status='pending',note='retry',supplier_code=NULL WHERE id=? AND status IN ('review','processing')", (oid,))
+        else:
+            return err("action")
+        alog(c, "order_" + action, f"order={oid}")
+    return jsonify(ok=True)
+
+
+@app.get("/api/admin/users")
+@admin_required
+def admin_users():
+    q = (request.args.get("q") or "").strip()
+    with db() as c:
+        if q:
+            rows = c.execute("SELECT id,name,wallet FROM users WHERE name LIKE ? OR CAST(id AS TEXT)=? ORDER BY id DESC LIMIT 100", (f"%{q}%", q)).fetchall()
+        else:
+            rows = c.execute("SELECT id,name,wallet FROM users ORDER BY id DESC LIMIT 100").fetchall()
+    return jsonify(users=[dict(r, wallet=r["wallet"] / 100) for r in rows])
+
+
+@app.post("/api/admin/users/<int:uid>/wallet")
+@admin_required
+def admin_wallet(uid):
+    d = request.get_json(silent=True) or {}
+    try:
+        cents = round(float(d.get("amount")) * 100)
+    except (TypeError, ValueError):
+        return err("amount")
+    if cents == 0 or abs(cents) > 100000 * 100:
+        return err("amount")
+    with db() as c:
+        if c.execute("UPDATE users SET wallet=wallet+? WHERE id=? AND wallet+?>=0", (cents, uid, cents)).rowcount != 1:
+            return err("user not found or balance would be negative")
+        alog(c, "wallet", f"user={uid} cents={cents} reason={str(d.get('reason') or '')[:100]}")
+    return jsonify(ok=True)
+
+
+@app.get("/api/admin/deposits")
+@admin_required
+def admin_deposits():
+    with db() as c:
+        rows = c.execute("SELECT txn,user_id,cents,status,created FROM deposits ORDER BY created DESC LIMIT 100").fetchall()
+    return jsonify(deposits=[dict(r, cents=r["cents"] / 100) for r in rows])
+
 
 # ---------- dev mode (local testing only) ----------
 if DEV_MODE:
