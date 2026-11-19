@@ -1,6 +1,6 @@
 /* ====== កែ ២ បន្ទាត់នេះ ====== */
 var API = 'https://webseit-top-up.onrender.com/api';   // ដូរទៅ URL ពិតប្រាកដនៅលើ Render របស់អ្នក';  // test ក្នុង Laragon · ពេលដាក់ពិតដូរទៅ URL backend
-var BOT='YourBotUsername';                           // ឈ្មោះ Telegram bot (គ្មាន @)
+var BOT='@webseit_topup_game_bot';                           // ឈ្មោះ Telegram bot (គ្មាន @)
 /* ============================== */
 var T=null,U=null,G=[],sel=null,msg='',slide=0,poll=null;
 try{T=localStorage.getItem('gt')}catch(e){}
