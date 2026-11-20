@@ -10,8 +10,15 @@ DEV_MODE = os.environ.get("DEV_MODE") == "1"  # LOCAL TESTING ONLY
 # Shop pack code (3rd value in CATALOG) -> supplier package_id (integer).
 # Find ids by running:  python supplier.py
 PACKAGE_IDS = {
-    # "ML86": 101,
-    # "ML172": 102,
+    # Mobile Legends KH
+    "ML86": 269, "ML172": 271, "ML257": 272, "ML706": 283,
+    # Free Fire (freefire-sgmy)
+    "FF310": 376, "FF520": 377, "FF1060": 378,
+    # PUBG Mobile Global (UC)
+    "UC60": 392, "UC325": 393, "UC660": 394,
+    # Free Fire Weekly / Monthly
+    "KHW": 383, "KHM": 4852,
+    # TODO: MLPH86, MLPH172, MLPH429, TK1, TK5 (no package_id yet)
 }
 
 IN_PROGRESS = {"processing", "pending", "accepted"}
@@ -30,7 +37,7 @@ class SupplierError(Exception):
 
 class KhmerTopUp:
     def __init__(self):
-        self.headers = {"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json",
+        self.headers = {"X-API-Key": API_KEY, "Content-Type": "application/json",
                         "Accept": "application/json"}
 
     def _request(self, method, path, **kw):
