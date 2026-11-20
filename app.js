@@ -1,7 +1,8 @@
 /* ====== កែ ២ បន្ទាត់នេះ ====== */
-var API = '[https://webseit-top-up.onrender.com/api](https://webseit-top-up.onrender.com/api)'; // ភ្ជាប់ទៅ Render Backend[cite: 8]
-var BOT = 'webseit_topup_game_bot';                   // ឈ្មោះ Telegram bot (គ្មាន @)
+var API = 'https://webseit-top-up.onrender.com/api';
+var BOT = 'webseit_topup_game_bot';                      
 /* ============================== */
+
 var T=null,U=null,G=[],sel=null,msg='',slide=0,poll=null;
 try{T=localStorage.getItem('gt')}catch(e){}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
@@ -14,7 +15,7 @@ async function api(p,o){o=o||{};var h={'Content-Type':'application/json'};if(T)h
  if(!r.ok){var er=new Error(d.error||'HTTP '+r.status);er.status=r.status;throw er}return d}
 
 window.onTg=async function(u){try{var d=await api('/auth/telegram',{method:'POST',body:u});T=d.token;U=d.user;try{localStorage.setItem('gt',T)}catch(e){}go('#shop')}catch(e){msg='<span class="er">'+esc(e.message)+'</span>';render()}};
-function tgWidget(){var el=document.getElementById('tg');if(!el)return;var s=document.createElement('script');s.async=true;s.src='[https://telegram.org/js/telegram-widget.js?22](https://telegram.org/js/telegram-widget.js?22)';
+function tgWidget(){var el=document.getElementById('tg');if(!el)return;var s=document.createElement('script');s.async=true;s.src='https://telegram.org/js/telegram-widget.js?22';
  s.setAttribute('data-telegram-login',BOT);s.setAttribute('data-size','large');s.setAttribute('data-radius','12');s.setAttribute('data-onauth','onTg(user)');s.setAttribute('data-request-access','write');el.appendChild(s)}
 var LOCAL=/localhost|127\.0\.0\.1/.test(API);
 async function devLogin(a){try{var d=await api('/dev/login',{method:'POST',body:{admin:a}});T=d.token;U=d.user;try{localStorage.setItem('gt',T)}catch(e){}go(a?'#admin':'#shop')}catch(e){msg='<span class="er">'+esc(e.message)+'</span>';render()}}
